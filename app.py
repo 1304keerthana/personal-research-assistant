@@ -67,7 +67,7 @@ def speak(text):
 
     audio_stream = tts.text_to_speech.convert(
         text=text,
-        voice_id="YOUR_VOICE_ID"
+        voice_id="8EEE0OzQy5ya1FinKf4y"
     )
 
     audio_bytes = b"".join(audio_stream)
