@@ -17,23 +17,17 @@ tts = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
 st.markdown("""
 <style>
 
-/* Main app background */
+/* 🌌 Main background */
 .stApp {
     background: linear-gradient(to right, #0f172a, #1e293b);
+}
+
+/* 🧠 Main text */
+.block-container {
     color: white;
 }
 
-/* Keep sidebar clean */
-section[data-testid="stSidebar"] {
-    background-color: #111827;  /* softer dark */
-}
-
-/* Sidebar text */
-section[data-testid="stSidebar"] * {
-    color: white !important;
-}
-
-/* Chat bubbles */
+/* 💬 Chat bubbles */
 .chat-box {
     padding: 15px;
     border-radius: 12px;
@@ -41,24 +35,26 @@ section[data-testid="stSidebar"] * {
     font-size: 16px;
 }
 
-/* User */
+/* 👤 User message */
 .user {
     background: #38bdf8;
     color: black !important;
 }
 
-/* Bot */
+/* 🤖 Bot message */
 .bot {
     background: #1e293b;
     color: white !important;
 }
 
-/* Input text */
-input {
+/* ⌨️ Chat input box */
+textarea, input {
+    background-color: #1e293b !important;
     color: white !important;
+    border-radius: 10px;
 }
 
-/* Buttons */
+/* 🔘 Buttons */
 .stButton button {
     background-color: #38bdf8;
     color: black;
@@ -66,9 +62,17 @@ input {
     font-weight: bold;
 }
 
+/* 📦 Sidebar (safe styling) */
+section[data-testid="stSidebar"] {
+    background-color: #111827;
+}
+
+section[data-testid="stSidebar"] * {
+    color: white;
+}
+
 </style>
 """, unsafe_allow_html=True)
-
 
 # 🧠 SESSION MEMORY
 if "history" not in st.session_state:
