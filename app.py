@@ -14,28 +14,54 @@ genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-flash-latest")
 tts = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
 
-# 🎨 CSS
 st.markdown("""
 <style>
-body {
-    background-color: #0f172a;
+
+/* Full page background */
+.stApp {
+    background: linear-gradient(to right, #0f172a, #1e293b);
     color: white;
 }
+
+/* Force all text visible */
+html, body, [class*="css"]  {
+    color: white !important;
+}
+
+/* Chat bubbles */
 .chat-box {
-    background: #1e293b;
     padding: 15px;
     border-radius: 12px;
     margin-bottom: 10px;
+    font-size: 16px;
 }
+
+/* User message */
 .user {
-    background: #0ea5e9;
-    color: black;
+    background: #38bdf8;
+    color: black !important;
 }
+
+/* Bot message */
 .bot {
     background: #1e293b;
+    color: white !important;
 }
+
+/* Input box */
+input {
+    color: white !important;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #020617;
+    color: white;
+}
+
 </style>
 """, unsafe_allow_html=True)
+st.write(result)
 
 # 🧠 SESSION MEMORY
 if "history" not in st.session_state:
