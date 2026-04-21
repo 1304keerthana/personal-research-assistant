@@ -17,14 +17,19 @@ tts = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
 st.markdown("""
 <style>
 
-/* Full page background */
+/* Main app background */
 .stApp {
     background: linear-gradient(to right, #0f172a, #1e293b);
     color: white;
 }
 
-/* Force all text visible */
-html, body, [class*="css"]  {
+/* Keep sidebar clean */
+section[data-testid="stSidebar"] {
+    background-color: #111827;  /* softer dark */
+}
+
+/* Sidebar text */
+section[data-testid="stSidebar"] * {
     color: white !important;
 }
 
@@ -36,27 +41,29 @@ html, body, [class*="css"]  {
     font-size: 16px;
 }
 
-/* User message */
+/* User */
 .user {
     background: #38bdf8;
     color: black !important;
 }
 
-/* Bot message */
+/* Bot */
 .bot {
     background: #1e293b;
     color: white !important;
 }
 
-/* Input box */
+/* Input text */
 input {
     color: white !important;
 }
 
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #020617;
-    color: white;
+/* Buttons */
+.stButton button {
+    background-color: #38bdf8;
+    color: black;
+    border-radius: 10px;
+    font-weight: bold;
 }
 
 </style>
