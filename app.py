@@ -61,7 +61,7 @@ section[data-testid="stSidebar"] {
 
 </style>
 """, unsafe_allow_html=True)
-st.write(result)
+
 
 # 🧠 SESSION MEMORY
 if "history" not in st.session_state:
