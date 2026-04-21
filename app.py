@@ -116,8 +116,8 @@ if st.button("Research"):
                 st.write(link)
 
             st.subheader("🎧 Audio")
-           if audio:
-               st.subheader("🎧 Audio")
-               st.audio(audio)
-           else:
-               st.warning("⚠️ Audio not available")
+            if audio:
+                st.subheader("🎧 Audio")
+                st.audio(audio)
+            else:
+                st.warning("⚠️ Audio not available")
