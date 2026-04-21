@@ -62,20 +62,35 @@ def analyze(topic, content):
     return response.text
 
 
+from gtts import gTTS  # fallback
+
 def speak(text):
-    text = text[:1000]
+    text = text[:800]
 
-    audio_stream = tts.text_to_speech.convert(
-        text=text,
-        voice_id="8EEE0OzQy5ya1FinKf4y"
-    )
+    try:
+        # Try ElevenLabs first
+        audio_stream = tts.text_to_speech.convert(
+            text=text,
+            voice_id="EXAVITQu4vr4xnSDxMaL"  # try this free one
+        )
+        audio_bytes = b"".join(audio_stream)
 
-    audio_bytes = b"".join(audio_stream)
+        with open("output.mp3", "wb") as f:
+            f.write(audio_bytes)
 
-    with open("output.mp3", "wb") as f:
-        f.write(audio_bytes)
+        return "output.mp3"
 
-    return "output.mp3"
+    except Exception as e:
+        print("ElevenLabs failed:", e)
+
+        # 🔁 FALLBACK → gTTS (100% works)
+        try:
+            tts_fallback = gTTS(text=text, lang='en')
+            tts_fallback.save("output.mp3")
+            return "output.mp3"
+        except Exception as e:
+            print("Fallback failed:", e)
+            return None
 
 
 # UI
@@ -101,4 +116,8 @@ if st.button("Research"):
                 st.write(link)
 
             st.subheader("🎧 Audio")
-            st.audio(audio)
+           if audio:
+               st.subheader("🎧 Audio")
+               st.audio(audio)
+           else:
+               st.warning("⚠️ Audio not available")
