@@ -11,7 +11,7 @@ st.set_page_config(page_title="AI Research Assistant", page_icon="🧠", layout=
 
 # 🔐 APIs
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-st.write("Gemini Key:", st.secrets["GEMINI_API_KEY"][:10])
+
 model = genai.GenerativeModel("gemini-flash-latest")
 tts = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
 
