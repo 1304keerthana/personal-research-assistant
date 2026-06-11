@@ -65,6 +65,27 @@ def search(query):
         if link:
             links.append(link)
     return links
+def get_images(query):
+    headers = {
+        "Authorization": st.secrets["PEXELS_API_KEY"]
+    }
+
+    url = f"https://api.pexels.com/v1/search?query={query}&per_page=3"
+
+    try:
+        response = requests.get(url, headers=headers)
+        data = response.json()
+
+        images = []
+
+        for photo in data.get("photos", []):
+            images.append(photo["src"]["large"])
+
+        return images
+
+    except Exception as e:
+        st.error(f"Image Error: {e}")
+        return []
 
 # 📄 SCRAPE
 def scrape(links):
@@ -153,10 +174,12 @@ if user_input:
         content = scrape(links)
         result = analyze(user_input, content)
         audio = speak(result, voice_toggle)
+        images = get_images(user_input)
 
     st.session_state.history.append(("bot", result))
     st.session_state.history.append(("audio", audio))
     st.session_state.history.append(("links", links))
+    st.session_state.history.append(("images", images))
 
 # 💬 DISPLAY CHAT
 for item in st.session_state.history:
@@ -181,6 +204,13 @@ for item in st.session_state.history:
         with st.expander("📚 Sources"):
             for l in content:
                 st.write(l)
+    elif role == "images":
+        if content:
+            st.subheader("🖼️ Related Images")
+            cols = st.columns(len(content))
+            for col, img_url in zip(cols, content):
+                with col:
+                    st.image(img_url, use_container_width=True)
 
 # 📥 DOWNLOAD
 if st.session_state.history:
