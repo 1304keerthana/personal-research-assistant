@@ -24,16 +24,29 @@ models_to_try = [
 ]
 
 model = None
+model_name_used = None
 for model_name in models_to_try:
     try:
-        model = genai.GenerativeModel(model_name)
-        st.success(f"✅ Using model: {model_name}")
+        test_model = genai.GenerativeModel(model_name)
+        model = test_model
+        model_name_used = model_name
         break
     except Exception as e:
         continue
 
 if not model:
-    st.error("❌ No compatible Gemini model found. Please check your API key and available models.")
+    st.error("❌ No compatible Gemini model found. Please check your API key.")
+    st.info("""
+    **Setup Instructions:**
+    1. Go to https://share.streamlit.io/settings
+    2. Click 'Secrets' tab
+    3. Add these secrets:
+    ```
+    GEMINI_API_KEY = "your_key"
+    ELEVENLABS_API_KEY = "your_key"
+    PEXELS_API_KEY = "your_key"
+    ```
+    """)
     st.stop()
 
 elevenlabs_key = st.secrets.get("ELEVENLABS_API_KEY", "")

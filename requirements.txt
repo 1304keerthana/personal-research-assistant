@@ -1,6 +1,6 @@
-streamlit
-requests
-beautifulsoup4
-google-generativeai==0.7.2
-elevenlabs
-gtts
+streamlit>=1.28.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+google-generativeai>=0.3.0
+elevenlabs>=0.2.0
+gtts>=2.4.0
