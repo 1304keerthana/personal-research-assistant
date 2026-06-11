@@ -4,9 +4,11 @@ from bs4 import BeautifulSoup
 from elevenlabs.client import ElevenLabs
 from gtts import gTTS
 import time
-from google import genai
+import google.generativeai as genai
 
-client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
+model = genai.GenerativeModel("gemini-1.5-flash")
 # 🔑 CONFIG
 st.set_page_config(page_title="AI Research Assistant", page_icon="🧠", layout="wide")
 
