@@ -9,14 +9,41 @@ import google.generativeai as genai
 
 # 🔑 CONFIG
 st.set_page_config(page_title="AI Research Assistant", page_icon="🧠", layout="wide")
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# force new API behavior
+genai_key = st.secrets.get("GEMINI_API_KEY", "")
+genai.configure(api_key=genai_key)
 genai.use_vertexai = False
 
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Try multiple model options
+models_to_try = [
+    "gemini-3.5-flash",
+    "gemini-1.5-pro",
+    "gemini-2.0-flash-exp", 
+    "gemini-1.5-flash",
+    "gemini-pro"
+]
 
-tts = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
+model = None
+for model_name in models_to_try:
+    try:
+        model = genai.GenerativeModel(model_name)
+        st.success(f"✅ Using model: {model_name}")
+        break
+    except Exception as e:
+        continue
+
+if not model:
+    st.error("❌ No compatible Gemini model found. Please check your API key and available models.")
+    st.stop()
+
+elevenlabs_key = st.secrets.get("ELEVENLABS_API_KEY", "")
+try:
+    if elevenlabs_key and elevenlabs_key != "your_elevenlabs_api_key_here":
+        tts = ElevenLabs(api_key=elevenlabs_key)
+    else:
+        tts = None
+except Exception:
+    tts = None
 
 st.markdown("""
 <style>
@@ -58,66 +85,82 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 # 🔍 SEARCH
-def search(query):
-    url = f"https://html.duckduckgo.com/html/?q={query}"
-    res = requests.get(url)
+def search(query, max_results=3):
+    encoded = requests.utils.requote_uri(query)
+    url = f"https://html.duckduckgo.com/html/?q={encoded}"
+    res = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(res.text, "html.parser")
 
     links = []
-    for a in soup.find_all("a", class_="result__a", limit=3):
+    for a in soup.find_all("a", class_="result__a", limit=max_results):
         link = a.get("href")
         if link:
             links.append(link)
     return links
 def get_images(query):
+    pexels_key = st.secrets.get("PEXELS_API_KEY")
+    if not pexels_key:
+        return []
+
     headers = {
-        "Authorization": st.secrets["PEXELS_API_KEY"]
+        "Authorization": pexels_key
     }
 
-    url = f"https://api.pexels.com/v1/search?query={query}&per_page=3"
+    url = f"https://api.pexels.com/v1/search?query={requests.utils.requote_uri(query)}&per_page=3"
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=10)
         data = response.json()
 
         images = []
-
         for photo in data.get("photos", []):
             images.append(photo["src"]["large"])
 
         return images
-
     except Exception as e:
-        st.error(f"Image Error: {e}")
+        st.warning(f"Image fetch failed: {e}")
         return []
 
 # 📄 SCRAPE
-def scrape(links):
+def scrape(links, max_chars=4000):
     text = ""
+    headers = {"User-Agent": "Mozilla/5.0"}
+
     for link in links:
         try:
-            res = requests.get(link, timeout=10)
+            res = requests.get(link, timeout=10, headers=headers)
             soup = BeautifulSoup(res.text, "html.parser")
             for s in soup(["script", "style"]):
                 s.decompose()
-            text += soup.get_text()[:1500]
-        except:
-            pass
-    return text
 
-def analyze(topic, content):
-    content = content[:3000]
+            paragraphs = [p.get_text(separator=" ", strip=True) for p in soup.find_all("p")]
+            page_text = "\n\n".join(paragraphs)
+            text += page_text[:1500] + "\n\n"
 
+            if len(text) >= max_chars:
+                break
+        except requests.RequestException:
+            continue
+
+    return text.strip()
+
+def analyze(topic, content, sources):
+    source_text = content[:3200]
     prompt = f"""
     Topic: {topic}
 
-    Based on:
-    {content}
+    Sources:
+    {sources}
 
-    Give:
-    🧠 Summary
-    📌 Key Points
-    🔍 Conclusion
+    Content excerpts:
+    {source_text}
+
+    Please provide a high-quality research summary for the topic above.
+    Include:
+    - A short summary of the topic
+    - 3 key points
+    - A concise conclusion
+    - Suggested next steps or further questions for research
     """
 
     try:
@@ -128,26 +171,32 @@ def analyze(topic, content):
         st.error(f"Gemini Error: {e}")
         return f"Error: {e}"
 # 🎙️ SPEAK (SAFE)
-def speak(text, enable_voice):
-    if not enable_voice:
+VOICE_IDS = {
+    "Default": "EXAVITQu4vr4xnSDxMaL",
+    "Alternative": "EXAVITQu4vr4xnSDxMaL"
+}
+
+
+def speak(text, enable_voice, voice_id):
+    if not enable_voice or not text:
         return None
 
     text = text[:800]
 
     try:
-        audio_stream = tts.text_to_speech.convert(
-            text=text,
-            voice_id="EXAVITQu4vr4xnSDxMaL"
-        )
-        audio_bytes = b"".join(audio_stream)
-
-        with open("output.mp3", "wb") as f:
-            f.write(audio_bytes)
-
-        return "output.mp3"
-
-    except:
-        # fallback
+        if tts:
+            audio_stream = tts.text_to_speech.convert(
+                text=text,
+                voice_id=voice_id
+            )
+            audio_bytes = b"".join(audio_stream)
+            with open("output.mp3", "wb") as f:
+                f.write(audio_bytes)
+            return "output.mp3"
+        else:
+            raise Exception("ElevenLabs not configured")
+    except Exception:
+        # Use gTTS fallback
         tts_fallback = gTTS(text=text, lang='en')
         tts_fallback.save("output.mp3")
         return "output.mp3"
@@ -159,12 +208,15 @@ st.caption("Search • Analyze • Chat • Listen 🎧")
 # 🎛️ SIDEBAR SETTINGS
 st.sidebar.header("⚙️ Settings")
 
-voice_toggle = st.sidebar.toggle("Enable Voice", True)
+voice_toggle = st.sidebar.checkbox("Enable Voice", True)
 
 voice_choice = st.sidebar.selectbox(
     "Voice",
-    ["Default", "Alternative"]
+    ["Default", "Alternative"],
+    index=0
 )
+
+max_results = st.sidebar.slider("Search results to scrape", min_value=1, max_value=5, value=3)
 
 clear = st.sidebar.button("🗑️ Clear Chat")
 
@@ -177,11 +229,11 @@ user_input = st.chat_input("Ask something...")
 if user_input:
     st.session_state.history.append(("user", user_input))
 
-    with st.spinner("Thinking..."):
-        links = search(user_input)
+    with st.spinner("Researching and summarizing..."):
+        links = search(user_input, max_results=max_results)
         content = scrape(links)
-        result = analyze(user_input, content)
-        audio = speak(result, voice_toggle)
+        result = analyze(user_input, content, "\n".join(links))
+        audio = speak(result, voice_toggle, VOICE_IDS.get(voice_choice, VOICE_IDS["Default"]))
         images = get_images(user_input)
 
     st.session_state.history.append(("bot", result))
@@ -209,16 +261,16 @@ for item in st.session_state.history:
         st.audio(content)
 
     elif role == "links":
-        with st.expander("📚 Sources"):
-            for l in content:
-                st.write(l)
-    elif role == "images":
         if content:
-            st.subheader("🖼️ Related Images")
-            cols = st.columns(len(content))
-            for col, img_url in zip(cols, content):
-                with col:
-                    st.image(img_url, use_container_width=True)
+            with st.expander("📚 Sources"):
+                for l in content:
+                    st.write(l)
+    elif role == "images" and content:
+        st.subheader("🖼️ Related Images")
+        cols = st.columns(len(content))
+        for col, img_url in zip(cols, content):
+            with col:
+                st.image(img_url, width='stretch')
 
 # 📥 DOWNLOAD
 if st.session_state.history:
