@@ -86,7 +86,7 @@ def get_images(query):
 
     except Exception as e:
         st.error(f"Image Error: {e}")
-    return []
+        return []
 
 # 📄 SCRAPE
 def scrape(links):
