@@ -119,10 +119,7 @@ def analyze(topic, content):
 
     try:
         st.write("Calling Gemini...")
-        response = client.models.generate_content(
-    model="models/gemini-1.5-flash",
-    contents=prompt
-)
+        response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         st.error(f"Gemini Error: {e}")
