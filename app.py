@@ -11,7 +11,8 @@ st.set_page_config(page_title="AI Research Assistant", page_icon="🧠", layout=
 
 # 🔐 APIs
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-flash-latest")
+st.write("Gemini Key:", st.secrets["GEMINI_API_KEY"][:10])
+model = genai.GenerativeModel("gemini-1.5-flash")
 tts = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
 
 st.markdown("""
@@ -101,7 +102,6 @@ def scrape(links):
             pass
     return text
 
-# 🤖 ANALYZE
 def analyze(topic, content):
     content = content[:3000]
 
@@ -117,8 +117,20 @@ def analyze(topic, content):
     🔍 Conclusion
     """
 
-    return model.generate_content(prompt).text
+    try:
+        response = model.generate_content(prompt)
+        return response.text
 
+    except Exception as e:
+        st.error(f"Gemini Error: {e}")
+        return """
+⚠️ Unable to generate summary.
+
+Possible reasons:
+- Gemini API quota exceeded
+- Invalid API key
+- Temporary Gemini service issue
+"""
 # 🎙️ SPEAK (SAFE)
 def speak(text, enable_voice):
     if not enable_voice:
