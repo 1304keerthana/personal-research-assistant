@@ -123,8 +123,8 @@ def analyze(topic, content):
         return response.text
 
     except Exception as e:
-    st.error(f"Gemini Error: {e}")
-    return f"Error: {e}"
+        st.error(f"Gemini Error: {e}")
+        return f"Error: {e}"
 # 🎙️ SPEAK (SAFE)
 def speak(text, enable_voice):
     if not enable_voice:
