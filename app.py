@@ -122,15 +122,13 @@ def analyze(topic, content):
         return response.text
 
     except Exception as e:
-        st.error(f"Gemini Error: {e}")
-        return """
-⚠️ Unable to generate summary.
+        if "429" in str(e):
+            return """
+⚠️ Gemini rate limit reached.
 
-Possible reasons:
-- Gemini API quota exceeded
-- Invalid API key
-- Temporary Gemini service issue
+Please wait about 30 seconds and try again.
 """
+        return f"Error: {e}"
 # 🎙️ SPEAK (SAFE)
 def speak(text, enable_voice):
     if not enable_voice:
