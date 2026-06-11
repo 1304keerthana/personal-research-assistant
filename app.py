@@ -6,12 +6,15 @@ from gtts import gTTS
 import time
 import google.generativeai as genai
 
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-model = genai.GenerativeModel("gemini-1.5-flash")
 # 🔑 CONFIG
 st.set_page_config(page_title="AI Research Assistant", page_icon="🧠", layout="wide")
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
+# force new API behavior
+genai.use_vertexai = False
+
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 tts = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
 
