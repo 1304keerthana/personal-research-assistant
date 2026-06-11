@@ -118,7 +118,7 @@ def analyze(topic, content):
     try:
         st.write("Calling Gemini...")
         response = client.models.generate_content(
-    model="gemini-1.5-flash",
+    model="models/gemini-1.5-flash",
     contents=prompt
 )
         return response.text
