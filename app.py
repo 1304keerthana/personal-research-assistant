@@ -118,6 +118,7 @@ def analyze(topic, content):
     """
 
     try:
+        st.write("Calling Gemini...")
         response = model.generate_content(prompt)
         return response.text
 
