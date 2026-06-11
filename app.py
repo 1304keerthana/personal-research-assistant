@@ -1,18 +1,16 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-import google.generativeai as genai
 from elevenlabs.client import ElevenLabs
 from gtts import gTTS
 import time
+from google import genai
 
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 # 🔑 CONFIG
 st.set_page_config(page_title="AI Research Assistant", page_icon="🧠", layout="wide")
 
-# 🔐 APIs
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-model = genai.GenerativeModel("models/gemini-1.5-flash")
 tts = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
 
 st.markdown("""
@@ -119,9 +117,11 @@ def analyze(topic, content):
 
     try:
         st.write("Calling Gemini...")
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+    model="gemini-1.5-flash",
+    contents=prompt
+)
         return response.text
-
     except Exception as e:
         st.error(f"Gemini Error: {e}")
         return f"Error: {e}"
