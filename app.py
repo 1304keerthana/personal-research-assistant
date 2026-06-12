@@ -10,29 +10,18 @@ import google.generativeai as genai
 # 🔑 CONFIG
 st.set_page_config(page_title="AI Research Assistant", page_icon="🧠", layout="wide")
 
-genai_key = st.secrets.get("GEMINI_API_KEY", "")
+genai_key = st.secrets.get("GEMINI_API_KEY")
+
+if not genai_key:
+    st.error("❌ GEMINI_API_KEY not found in Streamlit Secrets")
+    st.stop()
+
 genai.configure(api_key=genai_key)
-genai.use_vertexai = False
 
-# Try multiple model options
-models_to_try = [
-    "gemini-3.5-flash",
-    "gemini-1.5-pro",
-    "gemini-2.0-flash-exp", 
-    "gemini-1.5-flash",
-    "gemini-pro"
-]
-
-model = None
-model_name_used = None
-for model_name in models_to_try:
-    try:
-        test_model = genai.GenerativeModel(model_name)
-        model = test_model
-        model_name_used = model_name
-        break
-    except Exception as e:
-        continue
+try:
+    model = genai.GenerativeModel("gemini-2.5-flash")
+except:
+    model = genai.GenerativeModel("gemini-flash-latest")
 
 if not model:
     st.error("❌ No compatible Gemini model found. Please check your API key.")
@@ -105,7 +94,7 @@ def search(query, max_results=3):
     soup = BeautifulSoup(res.text, "html.parser")
 
     links = []
-    for a in soup.find_all("a", class_="result__a", limit=1):
+    for a in soup.find_all("a", class_="result__a", limit=max_results):
         link = a.get("href")
         if link:
             links.append(link)
@@ -123,6 +112,8 @@ def get_images(query):
 
     try:
         response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code != 200:
+            return []
         data = response.json()
 
         images = []
@@ -158,31 +149,40 @@ def scrape(links, max_chars=4000):
     return text.strip()
 
 def analyze(topic, content, sources):
-    source_text = content[:3200]
+
     prompt = f"""
     Topic: {topic}
 
     Sources:
     {sources}
 
-    Content excerpts:
-    {source_text}
+    Content:
+    {content[:3000]}
 
-    Please provide a high-quality research summary for the topic above.
-    Include:
-    - A short summary of the topic
-    - 3 key points
-    - A concise conclusion
-    - Suggested next steps or further questions for research
+    Create a professional research report including:
+
+    1. Executive Summary
+    2. Key Findings
+    3. Detailed Analysis
+    4. Future Scope
+    5. Conclusion
+
+    Format nicely using markdown.
     """
 
     try:
-        st.write("Calling Gemini...")
         response = model.generate_content(prompt)
-        return response.text
+
+        if hasattr(response, "text") and response.text:
+            return response.text
+
+        try:
+            return response.candidates[0].content.parts[0].text
+        except:
+            return "No response generated."
+
     except Exception as e:
-        st.error(f"Gemini Error: {e}")
-        return f"Error: {e}"
+        return f"Gemini Error: {str(e)}"
 # 🎙️ SPEAK (SAFE)
 VOICE_IDS = {
     "Default": "EXAVITQu4vr4xnSDxMaL",
@@ -263,13 +263,10 @@ for item in st.session_state.history:
 
     elif role == "bot":
         # typing effect
-        placeholder = st.empty()
-        text = ""
-        for char in content:
-            text += char
-            placeholder.markdown(f"<div class='chat-box bot'>🤖 {text}</div>", unsafe_allow_html=True)
-            time.sleep(0.002)
-
+       st.markdown(
+           f"<div class='chat-box bot'>🤖 {content}</div>",
+           unsafe_allow_html=True
+       )
     elif role == "audio" and content:
         st.audio(content)
 
@@ -283,7 +280,7 @@ for item in st.session_state.history:
         cols = st.columns(len(content))
         for col, img_url in zip(cols, content):
             with col:
-                st.image(img_url, width='stretch')
+                st.image(img_url, use_container_width=True)
 bot_responses = [i for i in st.session_state.history if i[0] == "bot"]
 
 if bot_responses:
