@@ -284,10 +284,10 @@ for item in st.session_state.history:
         for col, img_url in zip(cols, content):
             with col:
                 st.image(img_url, width='stretch')
+bot_responses = [i for i in st.session_state.history if i[0] == "bot"]
 
-# 📥 DOWNLOAD
-if st.session_state.history:
-    last_response = [i for i in st.session_state.history if i[0]=="bot"][-1][1]
+if bot_responses:
+    last_response = bot_responses[-1][1]
 
     st.download_button(
         "📥 Download Report",
