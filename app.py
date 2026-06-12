@@ -105,7 +105,7 @@ def search(query, max_results=3):
     soup = BeautifulSoup(res.text, "html.parser")
 
     links = []
-    for a in soup.find_all("a", class_="result__a", limit=max_results):
+    for a in soup.find_all("a", class_="result__a", limit=1):
         link = a.get("href")
         if link:
             links.append(link)
